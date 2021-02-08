@@ -1,8 +1,9 @@
 import { Document, Model, model, Schema } from 'mongoose'
+import { UserRoles } from './enums/userRoles.enum'
 
 export interface IUser extends Document {
   login: string,
-  role: string,
+  role: UserRoles,
 }
 
 export let UserSchema: Schema = new Schema({

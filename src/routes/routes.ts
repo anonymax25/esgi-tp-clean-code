@@ -3,6 +3,7 @@ import { BookController } from "../controllers/book.controller";
 import { LibraryController } from "../controllers/library.controller";
 import { UserController } from "../controllers/user.controller";
 import { Book } from "../models/book.model";
+import { UserRoles } from "../models/enums/userRoles.enum";
 import { Library } from "../models/library.model";
 import { User } from "../models/user.model";
 import { ManageBooksDTO, ManageBooksType } from "./dto/manageBooksDTO.interface";
@@ -90,7 +91,8 @@ export class Routes {
         // User
 
         app.route("/user").post(async (req: Request, res: Response) => {
-            if (req.body.login && req.body.role) {
+            
+            if (req.body.login && req.body.role && Object.values(UserRoles).includes(req.body.role)) {
                 try {
                     let user = await this.userController.create(req.body.login, req.body.role)
                     return res.status(201).json(user);
@@ -109,7 +111,9 @@ export class Routes {
         app.route("/user/:id").get(async (req: Request, res: Response) => {
             if (req.params.id) {
                 let user = await User.findOne({ _id: req.params.id })
-                return res.status(200).json(user);
+                if(user)
+                    return res.status(200).json(user);
+                return res.status(404).end();
             }
             return res.status(400).end();
         });
