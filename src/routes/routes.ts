@@ -91,8 +91,12 @@ export class Routes {
         // User
 
         app.route("/user").post(async (req: Request, res: Response) => {
-            
-            if (req.body.login && req.body.role && Object.values(UserRoles).includes(req.body.role)) {
+
+            if (req.body.login && req.body.role) {
+
+                if(Object.values(UserRoles).includes(req.body.role))
+                    return res.status(400).json(new HttpError(400, "Role dosen't exist"));
+
                 try {
                     let user = await this.userController.create(req.body.login, req.body.role)
                     return res.status(201).json(user);
@@ -119,4 +123,8 @@ export class Routes {
         });
 
     }
+}
+
+export class HttpError {
+    constructor(public httpStatus: number, public message: string) {}
 }
