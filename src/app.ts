@@ -1,16 +1,22 @@
 import * as express from "express";
 import * as bodyParser from "body-parser";
-import { Routes } from "./routes/routes";
+import { LibraryRoutes } from "./routes/library.routes";
 import { LoggerMiddleware } from "./middleware/logger.middleware";
+import { UserRoutes } from "./routes/user.routes.";
+import { BookRoutes } from "./routes/book.routes";
 
 class App {
   public app: express.Application;
-  public routes: Routes = new Routes();
+  public userRoutes: UserRoutes = new UserRoutes();
+  public libraryRoutes: LibraryRoutes = new LibraryRoutes();
+  public bookRoutes: BookRoutes = new BookRoutes();
 
   constructor() {
     this.app = express();
     this.config();
-    this.routes.routes(this.app);
+    this.userRoutes.routes(this.app);
+    this.libraryRoutes.routes(this.app);
+    this.bookRoutes.routes(this.app);
   }
 
   private config(): void {

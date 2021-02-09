@@ -20,4 +20,8 @@ export class BookController {
         const library = await Book.findOne({ _id: id });
         return library;
     }
+
+    public async delete(_id) {
+        return await Book.deleteOne({ _id })
+    }
 }

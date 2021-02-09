@@ -1,5 +1,6 @@
 import { Book, IBook } from "../models/book.model";
 import { Library } from "../models/library.model";
+import { BookController } from "./book.controller";
 
 export class LibraryController {
 
@@ -16,16 +17,18 @@ export class LibraryController {
         return await Library.find();
     }
 
-    public async getById(id) {
-        const library = await Library.findOne({ _id: id });
-        return library;
+    public async getById(_id: string) {
+        return await Library.findOne({ _id });
     }
 
     public async addBook(libraryId: string, bookId: string){
         const library = await Library.findOne({ _id: libraryId });
         const book = await Book.findOne({ _id: bookId });
-        library.books.push(book)
-        return await library.save();
+        if(library && book){
+            library.books.push(book)
+            return await library.save();
+        }
+        return null
     }
     public async removeBook(libraryId: string, bookId: string){
         const library = await Library.findOne({ _id: libraryId });
@@ -34,7 +37,19 @@ export class LibraryController {
         return await library.save();
     }
 
-    public async delete(login) {
-        return await Library.deleteOne({ login })
+    public async delete(_id: string) {
+        return await Library.deleteOne({ _id })
+    }
+    
+    public async getBookById(libraryId: string, bookId: string) {
+        let library = await (await Library.findOne({_id: libraryId}))
+        
+        let bookIds = Array.from(library.books) as Array<any>
+        
+        if(library){            
+            let foundBookId = bookIds.find(bookIdSearch => bookIdSearch.toString() === bookId)
+            return await Book.findOne({ _id: foundBookId});
+        }
+        return null;
     }
 }

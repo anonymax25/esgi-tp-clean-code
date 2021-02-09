@@ -5,9 +5,7 @@ import * as chai from 'chai';
 import chaiHttp = require('chai-http');
 import 'mocha';
 import { DatabaseManager } from '../src/config/database';
-import { IUser, User } from '../src/models/user.model';
 import { UserRoles } from '../src/models/enums/userRoles.enum';
-import { ILibrary } from '../src/models/library.model';
 import { ManageBooksType } from '../src/routes/dto/manageBooksDTO.interface';
 
 chai.use(chaiHttp);
@@ -29,10 +27,17 @@ describe('routes testing', () => {
     })
 
 
-    let user = {
+    let userLibrarian = {
         _id: null,
         login: "maxime",
         role: UserRoles.LIBRARIAN,
+        books: []
+    } 
+    
+    let userMember = {
+        _id: null,
+        login: "yana",
+        role: UserRoles.MEMBER,
         books: []
     } 
 
@@ -46,14 +51,29 @@ describe('routes testing', () => {
         title: "Test book",
         author: "Mr sananes"
     }
-    step('should create a user', (done) => {
+
+    // Create objects
+
+    step('should create a Librarian', (done) => {
         chai.request(app)
             .post('/user')
-            .send(user)
+            .send(userLibrarian)
             .end(function (err, res) {
                 expect(err).to.be.null;
                 expect(res).to.have.status(201);
-                user = res.body
+                userLibrarian = res.body
+                done()
+            });
+    })
+    
+    step('should create a Member', (done) => {
+        chai.request(app)
+            .post('/user')
+            .send(userMember)
+            .end(function (err, res) {
+                expect(err).to.be.null;
+                expect(res).to.have.status(201);
+                userMember = res.body
                 done()
             });
     })
@@ -72,7 +92,7 @@ describe('routes testing', () => {
     step('should create a library', (done) => {
         chai.request(app)
             .post('/library')
-            .set('Authorization', `Bearer ${user.login}`)
+            .set('Authorization', `Bearer ${userLibrarian._id}`)
             .send(library)
             .end(function (err, res) {                    
                 expect(err).to.be.null;
@@ -85,7 +105,7 @@ describe('routes testing', () => {
     step('should create a book', (done) => {
         chai.request(app)
             .post('/book')
-            .set('Authorization', `Bearer ${user.login}`)
+            .set('Authorization', `Bearer ${userLibrarian._id}`)
             .send(book)
             .end(function (err, res) {    
                 expect(err).to.be.null;
@@ -98,7 +118,7 @@ describe('routes testing', () => {
     step('should add a book to the library', (done) => {
         chai.request(app)
             .put(`/library/${library._id}/books`)
-            .set('Authorization', `Bearer ${user.login}`)
+            .set('Authorization', `Bearer ${userLibrarian._id}`)
             .send({
                 type: ManageBooksType.ADD,
                 bookId: book._id
@@ -110,20 +130,66 @@ describe('routes testing', () => {
             });
     })
     
+    step('user should borrow a book from the library', (done) => {
+        chai.request(app)
+            .put(`/library/${library._id}/book/${book._id}/borrow`)
+            .set('Authorization', `Bearer ${userMember._id}`)
+            .end(function (err, res) {        
+                expect(err).to.be.null;
+                expect(res).to.have.status(200);
+                userMember = res.body                      
+                expect(userMember.books.length).equals(1)     
+                done()
+            });
+    })
+    
+    step('user should return a book to the library', (done) => {
+        chai.request(app)
+            .put(`/library/${library._id}/book/${book._id}/return`)
+            .set('Authorization', `Bearer ${userMember._id}`)
+            .end(function (err, res) {        
+                expect(err).to.be.null;
+                expect(res).to.have.status(200);
+                userMember = res.body      
+                expect(userMember.books.length).equals(0)      
+                done()
+            });
+    })
+
+    // Delete objects
+    
     step('should delete a library', () => {
         chai.request(app)
             .delete(`/library/${library._id}`)
-            .set('Authorization', `Bearer ${user.login}`)
+            .set('Authorization', `Bearer ${userLibrarian._id}`)
+            .end(function (err, res) {
+                expect(err).to.be.null;
+                expect(res).to.have.status(204);
+            });
+    })
+    
+    step('should delete a book', () => {        
+        chai.request(app)
+            .delete(`/book/${book._id}`)
+            .set('Authorization', `Bearer ${userLibrarian._id}`)
             .end(function (err, res) {
                 expect(err).to.be.null;
                 expect(res).to.have.status(204);
             });
     })
 
-    step('should delete a user', () => {
+    step('should delete userLibrarian', () => {
         chai.request(app)
-            .delete(`/user/${user.login}`)
-            .set('Authorization', `Bearer ${user.login}`)
+            .delete(`/user/${userLibrarian._id}`)
+            .end(function (err, res) {
+                expect(err).to.be.null;
+                expect(res).to.have.status(204);
+            });
+    })
+    
+    step('should delete userMember', () => {
+        chai.request(app)
+            .delete(`/user/${userMember._id}`)
             .end(function (err, res) {
                 expect(err).to.be.null;
                 expect(res).to.have.status(204);

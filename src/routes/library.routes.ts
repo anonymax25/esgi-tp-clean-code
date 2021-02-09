@@ -3,21 +3,17 @@ import { BookController } from "../controllers/book.controller";
 import { LibraryController } from "../controllers/library.controller";
 import { UserController } from "../controllers/user.controller";
 import { AuthMiddleware } from "../middleware/auth.middleware";
-import { Book } from "../models/book.model";
-import { UserRoles } from "../models/enums/userRoles.enum";
 import { Library } from "../models/library.model";
-import { User } from "../models/user.model";
+import { IUser } from "../models/user.model";
 import { ManageBooksDTO, ManageBooksType } from "./dto/manageBooksDTO.interface";
 
-export class Routes {
+export class LibraryRoutes {
 
     public libraryController: LibraryController = new LibraryController();
     public bookController: BookController = new BookController();
     public userController: UserController = new UserController();
 
     public routes(app): void {
-
-        //library
 
         app.route("/library").post(AuthMiddleware.isLibrarian(), async (req: Request, res: Response) => {
             if (req.body.name) {
@@ -61,89 +57,65 @@ export class Routes {
                 return res.status(404).end();
             }
             return res.status(400).end();
+        }); 
+        
+        app.route("/library/:libraryId/book/:bookId/borrow").put(AuthMiddleware.isMember(), async (req: RequestUser, res: Response) => {            
+            if (req.params.libraryId && req.params.bookId) {                
+                let book = await this.libraryController.getBookById(req.params.libraryId, req.params.bookId)                
+                if(book){
+                    let user = req.user
+                    if(user.books.length < 4){
+                        let library = await this.libraryController.removeBook(req.params.libraryId, req.params.bookId)
+                        if(library){
+                            user.books.push(book)
+                            let resultUser = await user.save()
+                            return res.status(200).json(resultUser)
+                        }
+                        return res.status(500).json(req.user)
+                    }
+                    return res.status(409).json(new HttpError(409, 'Can\t order more than 4 books'))
+                }
+                return res.status(404).json(new HttpError(404, 'No book found'))
+            }
+            return res.status(400).end();
+        });
+
+        app.route("/library/:libraryId/book/:bookId/return").put(AuthMiddleware.isMember(), async (req: RequestUser, res: Response) => {
+            if (req.params.libraryId && req.params.bookId) {
+                let user = req.user
+                let returnBookId = user.books.find(book => book.toString() === req.params.bookId)
+                let returnBook = await this.bookController.getById(returnBookId)
+                if(returnBook){
+                    let library = await this.libraryController.addBook(req.params.libraryId, req.params.bookId)
+                    if(library){
+                        user.books.splice(user.books.indexOf(returnBook),1)
+                        let resultUser = await user.save()
+                        return res.status(200).json(resultUser)
+                    }
+                    return res.status(404).json(req.user)
+                }
+                return res.status(404).end()
+            }
+            return res.status(400).end();
         });
 
         app.route("/library/:id").delete(AuthMiddleware.isLibrarian(), async (req: Request, res: Response) => {
             if (req.params.id) {
-                await this.libraryController.delete(req.params.id)
-                return res.status(204)
-            }
-            return res.status(400).end();
-        });
-
-        //Book
-
-        app.route("/book").post(AuthMiddleware.isLibrarian(), async (req: Request, res: Response) => {
-            if (req.body.title && req.body.author) {
-                try {
-                    let book = await this.bookController.create(req.body.title, req.body.author)
-                    return res.status(201).json(book);
-                } catch (e) {
-                    res.status(500).json(e.message);
+                let result = await this.libraryController.delete(req.params.id)
+                if(result.deletedCount !== 1){
+                    return res.status(404).end()
                 }
+                return res.status(204).end()
             }
             return res.status(400).end();
         });
-
-        app.route("/book").get(async (req: Request, res: Response) => {
-            let books = await Book.find()
-            return res.status(200).json(books);
-        });
-
-        app.route("/book/:id").get(async (req: Request, res: Response) => {
-            if (req.params.id) {
-                let book = await Book.findOne({ _id: req.params.id })
-                return res.status(200).json(book);
-            }
-            return res.status(400).end();
-        });
-
-        // User
-
-        app.route("/user").post(async (req: Request, res: Response) => {
-
-            if (req.body.login && req.body.role) {
-
-                if(!Object.values(UserRoles).includes(req.body.role))
-                    return res.status(400).json(new HttpError(400, "Role dosen't exist"));
-
-                try {
-                    let user = await this.userController.create(req.body.login, req.body.role)
-                    return res.status(201).json(user);
-                } catch (e) {
-                    res.status(500).json(e.message);
-                }
-            }
-            return res.status(400).end();
-        });
-        
-        app.route("/user/:login").delete(async (req: Request, res: Response) => {
-
-            if (req.params.login) {
-                await this.userController.delete(req.params.login)
-                return res.status(204)
-            }
-            return res.status(400).end();
-        });
-
-        app.route("/user").get(async (req: Request, res: Response) => {
-            let users = await User.find()
-            return res.status(200).json(users);
-        });
-
-        app.route("/user/:id").get(async (req: Request, res: Response) => {
-            if (req.params.id) {
-                let user = await User.findOne({ _id: req.params.id })
-                if(user)
-                    return res.status(200).json(user);
-                return res.status(404).end();
-            }
-            return res.status(400).end();
-        });
-
     }
 }
 
 export class HttpError {
     constructor(public httpStatus: number, public message: string) {}
+}
+
+export interface RequestUser extends Request {
+    user: IUser
 }

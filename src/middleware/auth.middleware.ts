@@ -11,8 +11,8 @@ export class AuthMiddleware {
                 res.status(401).end();
                 return;
             }
-            const token = authorization.slice(7);
-            const user = await new UserController().getByLogin(token);
+            const id = authorization.slice(7);
+            const user = await new UserController().getById(id);
             if(!user) {
                 res.status(403).end();
                 return;
@@ -29,26 +29,25 @@ export class AuthMiddleware {
     
     static isMember() {
         return async function(req, res, next){
-            return async function(req, res, next){
-                const authorization = req.headers['authorization'];
-                if(!authorization || !authorization.startsWith('Bearer ')){
-                    res.status(401).end();
-                    return;
-                }
-                const token = authorization.slice(7);
-                const user = await new UserController().getByLogin(token);
-                if(!user) {
-                    res.status(403).end();
-                    return;
-                }
-    
-                if(user.role !== UserRoles.MEMBER) {
-                    res.status(403).end();
-                    return;
-                }
-                req.user = user;
-                next();
+            const authorization = req.headers['authorization'];
+            if(!authorization || !authorization.startsWith('Bearer ')){
+                res.status(401).end();
+                return;
             }
+            const id = authorization.slice(7);
+            const user = await new UserController().getById(id);
+            
+            if(!user) {
+                res.status(403).end();
+                return;
+            }
+
+            if(user.role !== UserRoles.MEMBER) {
+                res.status(403).end();
+                return;
+            }
+            req.user = user;
+            next();
         }
     }
 }
