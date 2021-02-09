@@ -4,6 +4,7 @@ import { LibraryController } from "../controllers/library.controller";
 import { UserController } from "../controllers/user.controller";
 import { UserRoles } from "../models/enums/userRoles.enum";
 import { IUser, User } from "../models/user.model";
+import { HttpError } from "../utils/router.utils";
 
 export class UserRoutes {
 
@@ -58,12 +59,4 @@ export class UserRoutes {
         });
 
     }
-}
-
-export class HttpError {
-    constructor(public httpStatus: number, public message: string) {}
-}
-
-export interface RequestUser extends Request {
-    user: IUser
 }

@@ -6,6 +6,7 @@ import { AuthMiddleware } from "../middleware/auth.middleware";
 import { Library } from "../models/library.model";
 import { IUser } from "../models/user.model";
 import { ManageBooksDTO, ManageBooksType } from "./dto/manageBooksDTO.interface";
+import { HttpError } from "../utils/router.utils";
 
 export class LibraryRoutes {
 
@@ -111,11 +112,6 @@ export class LibraryRoutes {
         });
     }
 }
-
-export class HttpError {
-    constructor(public httpStatus: number, public message: string) {}
-}
-
 export interface RequestUser extends Request {
     user: IUser
 }

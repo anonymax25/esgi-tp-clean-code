@@ -52,11 +52,3 @@ export class BookRoutes {
         });
     }
 }
-
-export class HttpError {
-    constructor(public httpStatus: number, public message: string) {}
-}
-
-export interface RequestUser extends Request {
-    user: IUser
-}
