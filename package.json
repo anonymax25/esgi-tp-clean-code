@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "ts-node ./src/server.ts",
-    "test": "mocha -r ts-node/register tests/**/*.spec.ts --require mocha-steps",
+    "test": "mocha -r ts-node/register tests/**/*.spec.ts --require mocha-steps --exit",
     "start:dev": "nodemon"
   },
   "keywords": [],
