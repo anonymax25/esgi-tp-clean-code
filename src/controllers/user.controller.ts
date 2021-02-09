@@ -6,7 +6,8 @@ export class UserController {
     public async create(login: string, role: UserRoles) {
         const user = new User({
             login,
-            role
+            role,
+            books: []
         });
         await user.save();
         return user;
@@ -16,8 +17,13 @@ export class UserController {
         return await User.find();
     }
 
-    public async getById(id) {
-        const user = await User.findOne({ _id: id });
-        return user;
+    public async getById(_id) {
+        return await User.findOne({ _id });
     }
+
+    public async getByLogin(login) {
+        return await User.findOne({ login })
+    }
+
+
 }

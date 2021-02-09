@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { BookController } from "../controllers/book.controller";
 import { LibraryController } from "../controllers/library.controller";
 import { UserController } from "../controllers/user.controller";
+import { AuthMiddleware } from "../middleware/auth.middleware";
 import { Book } from "../models/book.model";
 import { UserRoles } from "../models/enums/userRoles.enum";
 import { Library } from "../models/library.model";
@@ -63,7 +64,7 @@ export class Routes {
 
         //Book
 
-        app.route("/book").post(async (req: Request, res: Response) => {
+        app.route("/book").post(AuthMiddleware.isLibrarian(), async (req: Request, res: Response) => {
             if (req.body.title && req.body.author) {
                 try {
                     let book = await this.bookController.create(req.body.title, req.body.author)
@@ -94,7 +95,7 @@ export class Routes {
 
             if (req.body.login && req.body.role) {
 
-                if(Object.values(UserRoles).includes(req.body.role))
+                if(!Object.values(UserRoles).includes(req.body.role))
                     return res.status(400).json(new HttpError(400, "Role dosen't exist"));
 
                 try {
