@@ -24,6 +24,8 @@ export class UserController {
     public async getByLogin(login) {
         return await User.findOne({ login })
     }
-
-
+    
+    public async delete(login) {
+        return await User.deleteOne({ login })
+    }
 }

@@ -1,4 +1,4 @@
-import { IBook } from "../models/book.model";
+import { Book, IBook } from "../models/book.model";
 import { Library } from "../models/library.model";
 
 export class LibraryController {
@@ -22,9 +22,19 @@ export class LibraryController {
     }
 
     public async addBook(libraryId: string, bookId: string){
-
+        const library = await Library.findOne({ _id: libraryId });
+        const book = await Book.findOne({ _id: bookId });
+        library.books.push(book)
+        return await library.save();
     }
     public async removeBook(libraryId: string, bookId: string){
-        
+        const library = await Library.findOne({ _id: libraryId });
+        const book = await Book.findOne({ _id: bookId });
+        library.books.splice(library.books.indexOf(book),1)
+        return await library.save();
+    }
+
+    public async delete(login) {
+        return await Library.deleteOne({ login })
     }
 }

@@ -19,7 +19,7 @@ export class Routes {
 
         //library
 
-        app.route("/library").post(async (req: Request, res: Response) => {
+        app.route("/library").post(AuthMiddleware.isLibrarian(), async (req: Request, res: Response) => {
             if (req.body.name) {
                 try {
                     let library = await this.libraryController.create(req.body.name)
@@ -44,22 +44,31 @@ export class Routes {
             return res.status(400).end();
         });
 
-        app.route("/library/:id/books").put(async (req: Request, res: Response) => {
+        app.route("/library/:id/books").put(AuthMiddleware.isLibrarian(), async (req: Request, res: Response) => {
             let manageBook = req.body as ManageBooksDTO
-            if (req.params.id) {
+            if (req.params.id && manageBook.type && manageBook.bookId) {
                 let library = null
                 switch (manageBook.type) {
-                    case ManageBooksType.CREATE:
-                        library = await this.libraryController.addBook(req.params.id, manageBook.book._id)
+                    case ManageBooksType.ADD:
+                        library = await this.libraryController.addBook(req.params.id, manageBook.bookId)
                         break;
-                    case ManageBooksType.DELETE:
-                        library = await this.libraryController.removeBook(req.params.id, manageBook.book._id)
+                    case ManageBooksType.REMOVE:
+                        library = await this.libraryController.removeBook(req.params.id, manageBook.bookId)
                         break;
                 }
                 if (library)
                     return res.status(200).json(library);
-                return res.status(404).json(library);
+                return res.status(404).end();
             }
+            return res.status(400).end();
+        });
+
+        app.route("/library/:id").delete(AuthMiddleware.isLibrarian(), async (req: Request, res: Response) => {
+            if (req.params.id) {
+                await this.libraryController.delete(req.params.id)
+                return res.status(204)
+            }
+            return res.status(400).end();
         });
 
         //Book
@@ -104,6 +113,15 @@ export class Routes {
                 } catch (e) {
                     res.status(500).json(e.message);
                 }
+            }
+            return res.status(400).end();
+        });
+        
+        app.route("/user/:login").delete(async (req: Request, res: Response) => {
+
+            if (req.params.login) {
+                await this.userController.delete(req.params.login)
+                return res.status(204)
             }
             return res.status(400).end();
         });
